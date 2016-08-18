@@ -1,0 +1,7 @@
+writeMPS/dist/
+writeMPS/lib/
+writeMPS/build/
+*.exe
+*.zip
+
+
