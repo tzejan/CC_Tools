@@ -237,7 +237,7 @@ def populateMPS(MPSSource, labels, dstMPSFilename):
             if value in labels:
                 if "row" in labels[value]["csv_offset"]:
                     #print "Single Data", cell
-                    writeSingleData(sheet, labels[value]["data"], labels, value, r, c)
+                    writeSingleData(sheet, labels[value].get("data", ""), labels, value, r, c)
                 elif "variable" in labels[value]:
                     #print "Variable data", cell
                     writeVariableData(sheet, labels[value]["data"], labels, value, r, c)
@@ -287,6 +287,9 @@ def clearTheField(sheet, labels, label, location_row, location_col):
 
 def writeVariableData(sheet, data, labels, label, location_row, location_col):
     #print "writing variable data %s, %s" %(label, data)
+    if not data:
+        return 
+
     from openpyxl.styles import Side
 
     thinSide = Side(border_style='thin', color="FF000000")
@@ -402,7 +405,7 @@ def writeAssessmentComponents(sheet, data, labels, label, location_row, location
         for c in range(max_asm_comp_count):
             #for module assessment components less than 4, we set to None
             value = None
-            if c < len(data[0]):
+            if c < len(data):                
                 value = data[c][r]
 
             data_row = location_row+row_range_start_offset+r
@@ -423,7 +426,7 @@ def calculateCutOffForDistinction(labels):
 
     srcLabel = processLabelValues(labels[calKey]["calculate_cutoff"]["src"])
     dstLabel = processLabelValues(labels[calKey]["calculate_cutoff"]["dst"])
-    num_eligible = labels[srcLabel]['data']
+    num_eligible = labels[srcLabel].get('data', 0)
     score_idx = labels[calKey]["calculate_cutoff"]["score_idx"]
 
     student_cutoff = num_eligible-1
