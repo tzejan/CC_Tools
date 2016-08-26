@@ -47,12 +47,23 @@ def generateMPSFilename(labels):
     filename_values = [labels[processLabelValues(label)]['data'] for label in filename_labels]
     filename_values.append(filename_suffix)
 
+    #get diploma name
+    diploma = labels[processLabelValues("Name of Course")]['data']
+    dip = re.sub("[\&\(\)]|DIPLOMA|IN", "", diploma).split()
+    dip_short = "".join([w[0] for w in dip])
+    #print diploma, dip, dip_short
+
+    filename_values.insert(0, dip_short)
+
     #join up all the values, and sanitize the filename
     filename = "_".join(filename_values)
     #print filename
     keepcharacters = (' ','.','_')
     filename = "".join(c for c in filename if c.isalnum() or c in keepcharacters).rstrip()
     #print filename
+
+    
+
     return filename
 
 def generateMPS(csvFile = None):    
