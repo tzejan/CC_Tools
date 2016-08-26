@@ -55,7 +55,7 @@ def generateMPSFilename(labels):
 
     #get diploma name
     diploma = labels[processLabelValues("Name of Course")]['data']
-    dip = re.sub("[\&\(\)]|DIPLOMA|IN", "", diploma).split()
+    dip = re.sub(r"[\&\(\)]|\bDIPLOMA\b|\bIN\b", "", diploma).split()
     dip_short = "".join([w[0] for w in dip])
     #print diploma, dip, dip_short
 
