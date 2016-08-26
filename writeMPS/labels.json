@@ -1,10 +1,11 @@
 {
     "metadata":
     {
-        "source_MPS" : "SA_07QMS2_MPS_25Nov2015.xlsx",
+        "module_MPS" : "SA_07QMS2_MPS_25Nov2015.xlsx",
+        "GSM_MPS" : "SA_07QMS2_MPS(GSM) 11Aug2015.xlsx",
         "max_assessment_components" : 4        
     },
-    "labels":
+    "module_labels":
     [    
         {
             "label" : "Name of Course",
@@ -88,6 +89,49 @@
             "label" : "Note : Recommended list can be greater than 5% if students have similar score.",
             "csv_offset" : { "row_range_start" : 0, "col_range_start" : 0, "row_range_end" : 4, "col_range_end" : 1},
             "xls_offset" : { "row_range_start" : 0, "col_range_start" : 0, "row_range_end" : 0, "col_range_end" : 0}
+        }
+    ],
+    "GSM_labels":
+    [    
+        {
+            "label" : "Name of Course",
+            "csv_offset" : { "row" : 0, "col" : 1},
+            "xls_offset" : { "row" : 0, "col" : 2}
+        },
+        {
+            "label" : "Acad Year/Semester",
+            "csv_offset" : { "row" : 0, "col" : 1},
+            "xls_offset" : { "row" : 0, "col" : 2}
+        },
+        {
+            "label" : "Module Code",
+            "csv_offset" : { "row" : 0, "col" : 1},
+            "xls_offset" : { "row" : 0, "col" : 2}
+        },
+        {
+            "label" : "Module Name",
+            "csv_offset" : { "row" : 0, "col" : 1},
+            "xls_offset" : { "row" : 0, "col" : 2}
+        },
+        {
+            "label" : "Main Assessment Summary",
+            "csv_offset" : { "row_range_start" : 4, "col_range_start" : 1, "row_range_end" : 24, "col_range_end" : 7},
+            "xls_offset" : { "row_range_start" : 4, "col_range_start" : 3, "row_range_end" : 24, "col_range_end" : 9}
+        },
+        {
+            "label" : "List of Failures",
+            "csv_offset" : { "row_range_start" : 4, "col_range_start" : 1},
+            "xls_offset" : { "row_range_start" : 6, "col_range_start" : 1},
+            "variable" : true,
+            "current_xlsx_rows" : 10,
+            "physical_columns" : 11,
+            "empty_data_column" : 2,
+            "assessment_components" : 
+            {
+                "csv_offset" : { "row_range_start" : 1, "col_range_start" : 4},
+                "xls_offset" : { "row_range_start" : 3, "col_range_start" : 5},
+                "row_count" : 3
+            }
         }
     ]
 }

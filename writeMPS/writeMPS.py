@@ -22,7 +22,8 @@ def processLabelValues(value):
     return returnVal
 
 def loadLabels():
-    labels = {}
+    module_labels = {}
+    GSM_labels = {}
     try:
         with open("labels.json", "r") as f:
             data = json.loads(f.read())
@@ -32,11 +33,16 @@ def loadLabels():
     metadata = data['metadata']
     
     # putting the label as the key, for faster query
-    for datapoint in data['labels']:
+    for datapoint in data['module_labels']:
         label = processLabelValues(datapoint["label"])
-        labels[label] = datapoint        
+        module_labels[label] = datapoint
+
+    # putting the label as the key, for faster query
+    for datapoint in data['GSM_labels']:
+        label = processLabelValues(datapoint["label"])
+        GSM_labels[label] = datapoint     
          
-    return labels, metadata
+    return module_labels, GSM_labels, metadata
 
 def generateMPSFilename(labels):
     #this is a bit hardcoded
@@ -62,18 +68,55 @@ def generateMPSFilename(labels):
     filename = "".join(c for c in filename if c.isalnum() or c in keepcharacters).rstrip()
     #print filename
 
-    
-
     return filename
 
+def getModuleType(csv_data):
+    module_type = ""
+    module_code = ""
+
+    for row_idx, row in enumerate(csv_data):
+        #print "row %d\n" % row_idx
+        for col_idx, cell_value in enumerate(row):
+            if cell_value == "Module Code:":
+                module_code = row[col_idx+1]
+                break
+        if module_code:
+            break;
+
+    #what kind of module is this?
+    if module_code.startswith("DMS"):
+        module_type = "GSM"
+    elif module_code.startswith("DM"):
+        module_type = "core"
+
+    return module_type
+
+
 def generateMPS(csvFile = None):    
-    labels, metadata = loadLabels()    
-    csv_data = importCSV(csvFile, labels)
+    module_labels, GSM_labels, metadata = loadLabels()    
+    csv_data = importCSV(csvFile, module_labels)
+    module_type = getModuleType(csv_data)
+
+    print "%s module detected!" %  (module_type)
+    
+    labels = {}
+    MPSSource = ""
+    if module_type == "core":
+        labels = module_labels
+        MPSSource = metadata['module_MPS']
+    elif module_type == "GSM":
+        labels = GSM_labels
+        MPSSource = metadata['GSM_MPS']
+    
+    if not labels:
+        print "Unable to determine module type from MPCS CSV file!"
+        sys.exit(1)
+
     grabData(csv_data, labels)
     calculateCutOffForDistinction(labels)
 
     dstMPSFilename = generateMPSFilename(labels)    
-    populateMPS(metadata['source_MPS'], labels, dstMPSFilename)
+    populateMPS(MPSSource, labels, dstMPSFilename)
     #cleanupMPS(dstMPSFilename) # clean up the ** Module is combined with blah blah
     print "\n"
     print "SUCCESS!!! Please check the generated MPS for any errors before printing."
@@ -492,6 +535,8 @@ def writeDistinctionFootnote(labels, sheet):
         if "footnote" in labels[key]:
             distinction_label = key
 
+    if not distinction_label:
+        return
     #see if we need additional rows, if we need, then we need to move the footnote
     #print len(labels[distinction_label]['data'])
     #print labels[distinction_label]['current_xlsx_rows']
@@ -539,10 +584,11 @@ def test():
 
 if __name__ == "__main__":
     MPCSFile = "MPCS_DMDF12.CSV"
-    if len(sys.argv) > 1:
+    MPCSFile = r"C:\Users\simtj\OneDrive\Work\Course\DMS342 Effective Communications for Better Relationships\DMS342 MPCS_DMDF06.CSV"
+    if len(sys.argv) > 1:        
         MPCSFile = sys.argv[1]
     else:
-        print "Enter the filename of your Module Performance Comparison Summary file or drag the file and drop it on top of this executable file to begin."
+        raw_input( "Enter the filename of your Module Performance Comparison Summary file or drag the file and drop it on top of this executable file to begin." )
         sys.exit(0)
 
     generateMPS(MPCSFile)
