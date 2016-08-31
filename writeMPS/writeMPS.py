@@ -2,10 +2,13 @@ import sys
 import csv
 import json
 import re
+import os
 
 sys.path.insert(0, './lib')
 import openpyxl
 
+working_directory = ""
+dest_directory = ""
 
 
 def processLabelValues(value):
@@ -25,9 +28,10 @@ def loadLabels():
     module_labels = {}
     GSM_labels = {}
     try:
-        with open("labels.json", "r") as f:
+        with open(os.path.join(working_directory,"labels.json"), "r") as f:
             data = json.loads(f.read())
-    except IOError:
+    except IOError:        
+        raw_input("FAILED!!! labels.json file not found!")
         sys.exit("FAILED!!! labels.json file not found!")
 
     metadata = data['metadata']
@@ -103,10 +107,10 @@ def generateMPS(csvFile = None):
     MPSSource = ""
     if module_type == "core":
         labels = module_labels
-        MPSSource = metadata['module_MPS']
+        MPSSource = os.path.join(working_directory, metadata['module_MPS'])
     elif module_type == "GSM":
         labels = GSM_labels
-        MPSSource = metadata['GSM_MPS']
+        MPSSource = os.path.join(working_directory, metadata['GSM_MPS'])
     
     if not labels:
         print "Unable to determine module type from MPCS CSV file!"
@@ -114,8 +118,12 @@ def generateMPS(csvFile = None):
 
     grabData(csv_data, labels)
     calculateCutOffForDistinction(labels)
+    processForNilData(labels) # adds nil data if there are no data
 
-    dstMPSFilename = generateMPSFilename(labels)    
+    
+    
+    dstMPSFilename = os.path.join(dest_directory, generateMPSFilename(labels))    
+
     populateMPS(MPSSource, labels, dstMPSFilename)
     #cleanupMPS(dstMPSFilename) # clean up the ** Module is combined with blah blah
     print "\n"
@@ -308,7 +316,7 @@ def populateMPS(MPSSource, labels, dstMPSFilename):
     except:
         print "\n"
         print "FAILED!!!"
-        print "%s is open, please close it and run this program again." % dstMPSFilename
+        raw_input( "%s is open, please close it and run this program again." % dstMPSFilename )
         sys.exit(1)
 
 def writeSingleData(sheet, data, labels, label, location_row, location_col):
@@ -319,8 +327,8 @@ def writeSingleData(sheet, data, labels, label, location_row, location_col):
         
     data_row = location_row+row_offset
     data_col = location_col+col_offset
-
-    sheet.cell(row=data_row, column=data_col).value = data
+    
+    sheet.cell(row=data_row, column=data_col).value = data    
 
 def clearTheField(sheet, labels, label, location_row, location_col):
     row_range_start_offset = labels[label]["xls_offset"]["row_range_start"]
@@ -391,8 +399,8 @@ def writeVariableData(sheet, data, labels, label, location_row, location_col):
             if co > insert_col:
                 data_idx -= 1
 
-            #first column for numbering
-            if co == -1:
+            #first column for numbering, only if this row contains actual data
+            if co == -1 and data[ro][0]:
                 value = ro+1
             elif co != insert_col and data_idx < num_data_cols:
                 value = data[ro][data_idx]
@@ -483,10 +491,12 @@ def calculateCutOffForDistinction(labels):
     num_eligible = labels[srcLabel].get('data', 0)
     score_idx = labels[calKey]["calculate_cutoff"]["score_idx"]
 
+
     student_cutoff = num_eligible-1
     num_qualified = len(labels[calKey]["data"])
 
     if num_qualified == 0: # no student eligible, that's bad
+        labels[dstLabel]["data"] = "N.A." 
         return #nothing to do
 
     if student_cutoff >= num_qualified: # fewer than the number of students qualified
@@ -504,6 +514,15 @@ def calculateCutOffForDistinction(labels):
         if row_index > student_cutoff:
             shortfall_lst[-1] = "Not recommended"
         row.extend(shortfall_lst)
+
+def processForNilData(labels):
+    for key, val in labels.iteritems():
+        if "nil_required" in val:
+            if len(labels[key]["data"]) == 0:
+                #print "%s needs data" % key
+                # First is usually admin number, then we put N.A. for name
+                labels[key]["data"] = [[None, "N.A.", None]]
+
 
 def cleanupMPS(MPSFilename):
     wb = openpyxl.load_workbook(MPSFilename)
@@ -584,12 +603,24 @@ def test():
 
 if __name__ == "__main__":
     MPCSFile = "MPCS_DMDF12.CSV"
-    MPCSFile = r"C:\Users\simtj\OneDrive\Work\Course\DMS342 Effective Communications for Better Relationships\DMS342 MPCS_DMDF06.CSV"
+    MPCSFile = r"C:\Users\simtj\OneDrive\Work\Course\DM2313 Portfolio Project\DM2313_MPCS_DMDF08.CSV"
+        
+    working_directory = os.path.dirname(sys.argv[0])
+
+    debug = False
+    if debug:
+        dest_directory = os.path.dirname(MPCSFile)
+        generateMPS(MPCSFile)
+        sys.exit(0)
+    
+    #normal run
     if len(sys.argv) > 1:        
         MPCSFile = sys.argv[1]
+        dest_directory = os.path.dirname(MPCSFile)
     else:
         raw_input( "Enter the filename of your Module Performance Comparison Summary file or drag the file and drop it on top of this executable file to begin." )
         sys.exit(0)
 
     generateMPS(MPCSFile)
+    raw_input()
     
