@@ -16,6 +16,7 @@ import math
 #assignmentDirectory = "D:/Temp/DM2122/Practical3"
 #assignmentDirectory = "D:/Temp/DM2122/Practical4"
 assignmentDirectory = r"D:\temp\gradebook_2016S1-DM2111_Assignment2"
+assignmentDirectory = r"D:\temp\gradebook_2017S1-DM2233_Assignment201_2017-06-12-00-05-08"
 reportDirectory = assignmentDirectory
 studentListFile = 'GDT16IDNames.csv'
 printNames = False

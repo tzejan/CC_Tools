@@ -5,3 +5,5 @@ writeMPS/build/
 *.zip
 
 
+Course Coordinator Tools/build/
+*.msi
