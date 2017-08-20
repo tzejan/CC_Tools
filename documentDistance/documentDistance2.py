@@ -48,7 +48,7 @@ def getCPPTokens():
             operators.append(re.sub(r"(.)", r'\\\1', word))
     
     # sort the operators from longest to shortest
-    operators.sort(lambda x,y: cmp(len(y), len(x)))    
+    operators.sort(key=lambda x: len(x), reverse=True)
     f.close()
 
     #additional keys
@@ -126,16 +126,16 @@ def getDocuments(directory):
         if m:
             studentID = m.group(0)
 
-        f = open(fullPath, 'r')
+        f = open(fullPath, 'r', encoding="ISO-8859-1")
         if studentID in fileContents:
             fileContents[studentID] += ' ' + f.read()
         else:
             fileContents[studentID] = f.read() #read character by character
         
         try:
-            fileContents[studentID].decode('utf-8')
+            fileContents[studentID]
         except UnicodeDecodeError:
-            print "UnicodeDecodeError at ", fullPath  
+            print ("UnicodeDecodeError at ", fullPath)
 
 
     return fileContents
@@ -146,7 +146,7 @@ def printVocabFrequency(vocabulary, count_matrix):
     """
     Prints the break down of the vocabulary frequency
     """
-    print "Vocabulary items =", len(vocabulary)
+    print ("Vocabulary items =", len(vocabulary))
     f = open(reportDirectory+"/Vocabulary.txt", 'w')        
     
     inv_map = {v:k for k, v in vocabulary.items()}
@@ -156,7 +156,7 @@ def printVocabFrequency(vocabulary, count_matrix):
     f.close()
 
     # save the vocabulary frequency matrix    
-    print count_matrix.shape
+    print (count_matrix.shape)
     np.savetxt(reportDirectory+ "/VocabularyFrequency.csv", count_matrix.transpose().toarray(), delimiter=",")
     #print count_matrix.todense().transpose()
     
@@ -195,8 +195,9 @@ def generateReport(similarity, studentIDs):
                 results.append((value, first, second))
                 key.add((first, second))
 
-    results.sort(lambda tup1,tup2: cmp(tup2[0], tup1[0]))
-    #print results
+    results.sort(key=lambda tup: tup[0], reverse=True)
+    #print (results)
+    #print (studentIDs)
 
     f = open(reportDirectory+"/SimilarityRanking.txt", 'w')
     for score, first, second in results:
@@ -269,9 +270,9 @@ def generateSigmaJSData(studentIDs, sortedResults, threshold=0.95):
         return "#%06X" % (int(255 * rgb[0]) << 16 | int(255 * rgb[1]) << 8 | int(255 * rgb[2]))
     
 
-    print "Generating sigma.js data"
+    print ("Generating sigma.js data")
     adminNumberDict = {}
-    with open(studentListFile, 'rb') as csvfile:
+    with open(studentListFile, 'rt') as csvfile:
         csvReader = csv.reader(csvfile)
         for entry in csvReader:
             adminNumberDict[entry[0]] = entry[1]
@@ -322,13 +323,13 @@ def generateSigmaJSData(studentIDs, sortedResults, threshold=0.95):
                           })
 
     # convert colour data into CSS color format
-    for key, value in nodes.iteritems():        
+    for key, value in nodes.items():
         resultHSV = interpolateHSV(value["color"], startHSV, endHSV)
         resultRGB = colorsys.hsv_to_rgb(resultHSV[0], resultHSV[1], resultHSV[2])
         value['color'] = RGBTupletoHex(resultRGB)
 
     jsonData = {}
-    jsonData["nodes"] = nodes.values()
+    jsonData["nodes"] = list(nodes.values())
     jsonData["edges"] = edges
 
     f = open(reportDirectory+"/data.json", 'w')
@@ -366,13 +367,13 @@ def main():
 
     if len(sys.argv) > 1:
         assignmentDirectory = sys.argv[1]    
-    print "Assignment Directory = ", assignmentDirectory
+    print ("Assignment Directory = ", assignmentDirectory)
 
     #unzip.unzipFiles(assignmentDirectory, subdir="/extracted/")    
     getCPPTokens()
     fileContents = getDocuments(assignmentDirectory)
     
-    print len(fileContents), "entries\n"
+    print (len(fileContents), "entries\n")
     f = open(reportDirectory+"/StudentIndex.txt", 'w')    
     f.write("\n".join(["%d %s" % (ind, val) for ind, val in enumerate(fileContents.keys())]))
     f.close()
@@ -381,19 +382,19 @@ def main():
     t0 = time.time()
     
     similarity = computeSimilarity(fileContents)
-    sortedResults = generateReport(similarity, fileContents.keys())
+    sortedResults = generateReport(similarity, list(fileContents.keys()))
     
 
     #printPlot(fileContents.keys(), similarity)
     top_percent = 15
-    threshold = sortedResults[len(sortedResults)*top_percent/100][0]
+    threshold = sortedResults[len(sortedResults)*top_percent//100][0]
     #print threshold
-    print "Threshold set at %d%% at %f" % (top_percent, threshold)
-    generateSigmaJSData(fileContents.keys(), sortedResults, threshold=threshold)
+    print ("Threshold set at %d%% at %f" % (top_percent, threshold))
+    generateSigmaJSData(list(fileContents.keys()), sortedResults, threshold=threshold)
     
     
     t1 = time.time()
-    print "Done in %fs" % (t1-t0)
+    print ("Done in %fs" % (t1-t0))
 
 
 
